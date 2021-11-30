@@ -1,19 +1,18 @@
 {
   "name": "minchat",
-  "version": "1.0.0",
+  "version": "0.0.1",
   "description": "A minimal chat application using node",
-  "main": "minchat.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
+  "main": "index.js",
   "repository": {
     "type": "git",
     "url": "git+ssh://git@github.com/charliehill/minchat.git"
   },
-  "author": "",
-  "license": "ISC",
   "bugs": {
     "url": "https://github.com/charliehill/minchat/issues"
   },
-  "homepage": "https://github.com/charliehill/minchat#readme"
+  "homepage": "https://github.com/charliehill/minchat#readme",
+  "dependencies": {
+    "express": "^4.17.1",
+    "socket.io": "^4.4.0"
+  }
 }

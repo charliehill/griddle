@@ -12,10 +12,12 @@
 
       #messages { list-style-type: none; margin: 0; padding: 0; }
       #messages > li { padding: 0.5rem 1rem; }
-      #messages > li:nth-child(odd) { background: #efefef; }
     </style>
   </head>
   <body>
+    <form id="header" action="">
+        <input id="nickname" autocomplete="off" />
+    </form>
     <ul id="messages"></ul>
     <form id="form" action="">
       <input id="input" autocomplete="off" /><button>Send</button>
@@ -33,7 +35,7 @@
         form.addEventListener('submit', function(e) {
             e.preventDefault();
             if (input.value) {
-            socket.emit('chat message', input.value);
+            socket.emit('chat message', nickname.value + ": " + input.value);
             input.value = '';
             }
         });
