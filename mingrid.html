@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Minigrid</title>
+    <style>
+        .grid-container {
+            display: grid;
+            grid-template-columns: auto auto auto;
+            grid-gap: 1px;
+            background-color: #2196F3;
+            padding: 10px;
+        }
+
+        .grid-container > div {
+            background-color: rgba(255, 255, 255, 0.8);
+            border: none;
+            text-align: center;
+            font-size: 30px;
+        }
+    </style>
+</head>
+<body onclick="processClick(event)"> 
+    <div class="grid-container">
+        <div id="c1.1">1</div>
+        <div id="c1.2">2</div>
+        <div id="c1.3">3</div>  
+        <div id="c2.1">4</div>
+        <div id="c2.2">5</div>
+        <div id="c2.3">6</div>
+        <div id="c3.1">7</div>
+        <div id="c3.2">8</div>
+        <div id="c3.3">9</div>
+    </div>
+    <script>
+        function processClick(event) { 
+            alert("Found cell: " + event.target.id);
+        }
+    </script>
+</body>
+</html>
