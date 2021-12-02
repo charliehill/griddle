@@ -39,9 +39,9 @@ io.on('connection', (socket) => {
 // GRID APP
 // Handle incoming cell clicks from any client
 io.on('connection', (socket) => {
-    socket.on('cell click', (msg) => {
-      console.log('message: ' + msg);
-      io.emit('cell click', msg);
+    socket.on('cell click', (clickinfo) => {
+      console.log("user: " + clickinfo.user + " cell: " + clickinfo.cell);
+      socket.broadcast.emit('cell click', clickinfo);
     });
 });
 
