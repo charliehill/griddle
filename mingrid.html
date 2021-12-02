@@ -21,6 +21,9 @@
     </style>
 </head>
 <body onclick="processClick(event)"> 
+    <form id="header" action="">
+        <input id="nickname" autocomplete="off" />
+    </form>
     <div class="grid-container">
         <div id="c1.1">1</div>
         <div id="c1.2">2</div>
@@ -32,10 +35,21 @@
         <div id="c3.2">8</div>
         <div id="c3.3">9</div>
     </div>
+    <script src="/socket.io/socket.io.js"></script>
     <script>
+        // Get a socket and define working variables
+        var socket = io();
+        
+        // Catch all clicks and send to server
         function processClick(event) { 
-            alert("Found cell: " + event.target.id);
+            event.preventDefault();
+            socket.emit('cell click', nickname.value + ": " + event.target.id);
         }
+
+        // Listen for incoming messages and append to the message log
+        socket.on('cell click', function(msg) {
+            console.log("Cell clicked: " + msg + " @ " + nickname.value); 
+        });
     </script>
 </body>
 </html>

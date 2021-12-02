@@ -5,11 +5,16 @@ const server = http.createServer(app);
 const { Server } = require("socket.io");
 const io = new Server(server);
 
-// Define the client
+// Define client routes
 app.get('/', (req, res) => {
   res.sendFile(__dirname + '/index.html');
 });
 
+app.get('/grid', (req, res) => {
+    res.sendFile(__dirname + '/mingrid.html');
+  });
+  
+  
 // Handle connections/disconnections
 io.on('connection', (socket) => {
   console.log('a user connected');
@@ -22,19 +27,23 @@ io.on('connection', (socket) => {
     });
 });
 
+// CHAT APP
 // Handle incoming chat messages from any client
 io.on('connection', (socket) => {
     socket.on('chat message', (msg) => {
       console.log('message: ' + msg);
+      io.emit('chat message', msg);
     });
 });
 
-// Broadcast messages to everyone
+// GRID APP
+// Handle incoming cell clicks from any client
 io.on('connection', (socket) => {
-    socket.on('chat message', (msg) => {
-      io.emit('chat message', msg);
+    socket.on('cell click', (msg) => {
+      console.log('message: ' + msg);
+      io.emit('cell click', msg);
     });
-  });
+});
 
 // Listen for events
 server.listen(3000, () => {
