@@ -4,38 +4,65 @@
     <meta charset="UTF-8">
     <title>Minigrid</title>
     <style>
+        header {
+            height: 50px;
+            padding: 8px;
+        }
+
+        .nickname {
+            padding: 2px;
+            border-style: solid;
+            border-width: 1px 1px 1px 12px; /* 25px top, 10px right, 4px bottom and 35px left */
+            height: 20px;
+            border-radius: 12px;
+        }
+
         .grid-container {
             display: grid;
+            height: 400px;
+            width: 400px;
             grid-template-columns: auto auto auto;
             grid-gap: 8px;
             padding: 8px;
             background-color: #FFFFFF;
-            font-family: Helvetica, Arial, sans-serif;
-            height: 400px;
-            width: 400px;
         }
 
         .grid-container > div {
-            background-color: #dddddd;
-            border: none;
+            font-family: HelveticaNeue, Helvetica, Arial, sans-serif;
+            background-color: #eee;
+            display: table-cell;
             text-align: center;
-            font-size: 90px;
+            vertical-align: middle;
+            font-size: 70px;
             border-radius: 5px;
+            border-width: 0px;
+/*
             border-style: solid;
-            border-width: 2px;
-            border-color: #dddddd;
+            border-color: #eee;
+*/
         }
  
         .grid-container > div.selected {
-            border-color: rgb(249, 67, 255);
+            border-color: rgb(139, 66, 207);
+        }
+
+        .userColor {
+            width: 400px;
+            height: 40px;
+            border-style: solid;
+            border-width: 1px;
+            border-color: black; 
         }
     </style>
 </head>
-<body onclick="processClick(event)"> 
-    <form id="header" action="">
-        <input id="nickname" autocomplete="off" />
-    </form>
-    <div class="grid-container">
+
+<body> 
+    <header>
+        <form id="header" action="">
+            <input id="nickname" class="nickname" autocomplete="off" oninput="genUserColor()"/>
+        </form>    
+    </header>
+    <div class="grid-container" onclick="processClick(event)">
         <div id="c1.1">1</div>
         <div id="c1.2">2</div>
         <div id="c1.3">3</div>  
@@ -43,31 +70,58 @@
         <div id="c2.2">5</div>
         <div id="c2.3">6</div>
         <div id="c3.1">7</div>
-        <div id="c3.2" class="selected">8</div>
+        <div id="c3.2">8</div>
         <div id="c3.3">9</div>
     </div>
     <script src="/socket.io/socket.io.js"></script>
     <script>
-        // Get a socket and define working variables
+        // Connect to the server and get a socket by return
         var socket = io();
         
-        // Catch all clicks and send to server
+        // Function to catch a click and send it to server
         function processClick(event) { 
             event.preventDefault();
-            socket.emit('cell click', {cell: event.target.id, user: nickname.value});
+            socket.emit('cell click', {cell: event.target.id, user: nickname.value, userColor: userColor});
         }
 
-        // Listen for incoming messages and append to the message log
+        // Listen for incoming clicks 
         socket.on('cell click', function(clickinfo) {
-            console.log("Cell clicked: " + clickinfo.cell + " @ " + clickinfo.user); 
+//            console.log("Cell clicked: " + clickinfo.cell + " @ " + clickinfo.user); 
             // Remove current selected state
+/*
             let elements = document.getElementsByClassName("selected");
-          if (elements.length !== 0) {
-                elements[0].classList.remove("selected"); 
-          } 
+            if (elements.length !== 0) {
+                    elements[0].classList.remove("selected"); 
+            } 
             // Set new selected state
             document.getElementById(clickinfo.cell).classList.add("selected"); 
+*/
+            document.getElementById(clickinfo.cell).style.backgroundColor = clickinfo.userColor; 
         });
+
+        // Function to generate highlight color from user's nickname
+        function stringToColor(str) {
+            var hash = 0;
+            for (var i = 0; i < str.length; i++) {
+                hash = str.charCodeAt(i) + ((hash << 5) - hash);
+            }
+            var color = '#';
+            for (var i = 0; i < 3; i++) {
+                var value = (hash >> (i * 8)) & 0xFF;
+                color += ('00' + value.toString(16)).substr(-2);
+            }
+            return color;
+        }
+
+        // Function to catch a key in nickname field and generate color from it
+        var userColor;
+        function genUserColor() { 
+            event.preventDefault();
+            userColor=stringToColor(nickname.value);
+            console.log(userColor);
+            document.getElementById("nickname").style.borderColor = userColor;
+        }
+
     </script>
 </body>
 </html>

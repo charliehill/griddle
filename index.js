@@ -28,7 +28,7 @@ io.on('connection', (socket) => {
 });
 
 // CHAT APP
-// Handle incoming chat messages from any client
+// Handle incoming chat messages 
 io.on('connection', (socket) => {
     socket.on('chat message', (msg) => {
       console.log('message: ' + msg);
@@ -37,12 +37,13 @@ io.on('connection', (socket) => {
 });
 
 // GRID APP
-// Handle incoming cell clicks from any client
+// Handle incoming cell clicks 
 io.on('connection', (socket) => {
     socket.on('cell click', (clickinfo) => {
-      console.log("user: " + clickinfo.user + " cell: " + clickinfo.cell);
-      socket.broadcast.emit('cell click', clickinfo);
-    });
+        console.log("user: " + clickinfo.user + " color: " + clickinfo.userColor + " cell: " + clickinfo.cell);
+//      socket.broadcast.emit('cell click', clickinfo);
+        io.emit('cell click', clickinfo);
+});
 });
 
 // Listen for events
