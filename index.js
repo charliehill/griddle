@@ -12,41 +12,28 @@ app.get('/', (req, res) => {
 
 app.get('/grid', (req, res) => {
     res.sendFile(__dirname + '/mingrid.html');
-  });
-  
-  
-// Handle connections/disconnections
-io.on('connection', (socket) => {
-  console.log('a user connected');
 });
-
+  
+// Listen for events
 io.on('connection', (socket) => {
-    console.log('a user connected');
+    // Connect/disconnect
+    console.log('User connected');
     socket.on('disconnect', () => {
       console.log('user disconnected');
     });
-});
-
-// CHAT APP
-// Handle incoming chat messages 
-io.on('connection', (socket) => {
-    socket.on('chat message', (msg) => {
-      console.log('message: ' + msg);
-      io.emit('chat message', msg);
+    // Chat 
+    socket.on('Chat message', (msg) => {
+        console.log('message: ' + msg);
+        io.emit('chat message', msg);
     });
-});
-
-// GRID APP
-// Handle incoming cell clicks 
-io.on('connection', (socket) => {
+    // Grid
     socket.on('cell click', (clickinfo) => {
-        console.log("user: " + clickinfo.user + " color: " + clickinfo.userColor + " cell: " + clickinfo.cell);
-//      socket.broadcast.emit('cell click', clickinfo);
+        console.log("User " + clickinfo.user + " clicked cell " + clickinfo.cell);
         io.emit('cell click', clickinfo);
-});
+    });
 });
 
 // Listen for events
 server.listen(3000, () => {
-  console.log('listening on *:3000');
+  console.log('Listening on *:3000');
 });
