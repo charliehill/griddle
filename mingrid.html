@@ -78,6 +78,8 @@
     </div>
     <script src="/socket.io/socket.io.js"></script>
     <script>
+        const defaultColor = "#eee";
+        
         // Connect to the server and get a socket by return
         var socket = io();
         
@@ -88,8 +90,9 @@
         }
 
         // Listen for incoming clicks 
-        socket.on('cell click', function(clickinfo) {
-            setUserColor(clickinfo.cell, clickinfo.color);
+        socket.on('cell update', function(click, oldCell) {
+            unSetUserColor(oldCell);
+            setUserColor(click.cell, click.color);
         });
 
         // Function to generate highlight color from user's nickname
@@ -108,7 +111,7 @@
             return color;
         }
 
-        // Function to catch a key in nickname field and generate color from it
+        // Catch a key in nickname field and generate color from it
         var color;
         
         function genUserColor() { 
@@ -117,15 +120,14 @@
             document.getElementById("nickname").style.borderColor = color;
         }
 
-        // Function to catch a key in nickname field and generate color from it
-        function setUserColor(cell, color) { 
-/*
-            // Clear currently highlighted cell if set
-            if (userCell != "") {
-                document.getElementById(userCell).style.backgroundColor = "#eee";
+        function unSetUserColor (cellID) {
+            if (cellID != "") {
+                document.getElementById(cellID).style.backgroundColor = defaultColor;
             }
-*/
-            // Set color of cell
+        }
+
+        // Set the color of a cell
+        function setUserColor(cell, color) { 
             document.getElementById(cell).style.backgroundColor = color; 
         }
         
