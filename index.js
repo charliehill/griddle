@@ -44,6 +44,12 @@ io.on('connection', (socket) => {
         let oldCell = updateGame(click);
         io.emit('cell update', click, oldCell);
     });
+
+    socket.on('set value', (name, value) => {
+        let cell = findCell(name);
+        if (cell != "") io.emit('value set', "cell." + cell.i + "." + cell.j, value);
+        console.log(cell, value);
+    });
 });
 
 // Listen for events
@@ -79,8 +85,6 @@ function updateGame(click) {
 // Find thee cell that the user currently occupies
 function findCell(name) {
 
-    let oldCell = "";
-
     for (let i=0; i<boardSize; i++) {
         for (let j=0; j<boardSize; j++) {
             if (game[i][j].name == name) { return {i, j}; }
@@ -100,3 +104,4 @@ function releaseCell(i, j) {
 function cellID(i, j) {
     return "cell." + i + "." + j;
 }
+
