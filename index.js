@@ -24,7 +24,7 @@ app.get('/', (req, res) => {
 });
 
 app.get('/grid', (req, res) => {
-    res.sendFile(__dirname + '/mingrid.html');
+    res.sendFile(__dirname + '/minigrid.html');
 });
 
 // Listen for events
