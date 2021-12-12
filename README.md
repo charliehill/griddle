@@ -1,6 +1,5 @@
 # minchat
-A minimalist chat app using node
+My first node project, consisting of: 
+1. A minimalist chat app largely copied from https://socket.io/get-started/chat
+2. A minimalist multiuser grid game app - a foundation for multiuser tic tac toe, sudoku, and other social experiments
 
-Study project to learn node.js and eventually build a server for simple multi-user realtime games. 
-
-Credit: Initial code copied from https://socket.io/get-started/chat
