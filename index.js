@@ -15,6 +15,9 @@ for (let i=0; i<boardSize; i++) {
     }
 }
 
+// Allow static files in Express
+app.use(express.static(__dirname));
+
 // Define client routes
 app.get('/', (req, res) => {
   res.sendFile(__dirname + '/index.html');
@@ -48,7 +51,6 @@ io.on('connection', (socket) => {
     socket.on('set value', (name, value) => {
         let cell = findCell(name);
         if (cell != "") io.emit('value set', "cell." + cell.i + "." + cell.j, value);
-        console.log(cell, value);
     });
 });
 
