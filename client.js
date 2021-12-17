@@ -1,5 +1,30 @@
 const defaultColor = "#eee";
-        
+
+// Load the grid
+// Generate grid of divs in format <div id="cell.row.col"></div> 
+// function loadGrid(cols, rows) {
+function loadGrid(cols, rows) {
+    console.log("Building gameboard " + rows + "x" + cols); 
+
+    let gameboard = document.getElementById("gameboard"); 
+
+    // Set the CSS for the required grid layout
+    let gridcolstr = "";
+    for (let col=0; col<cols; col++) {
+        gridcolstr += "auto ";
+    }
+    gameboard.style.gridTemplateColumns = gridcolstr; 
+
+    // Generate the HTML for the cells
+    for (let row=0; row<rows; row++) {
+        for (let col=0; col<cols; col++) {
+            let newDiv = document.createElement("div");
+            newDiv.id = "cell." + row + "." + col;
+            gameboard.appendChild(newDiv); 
+        }
+    }
+}
+
 // Connect to the server and get a socket by return
 var socket = io();
 
@@ -18,7 +43,12 @@ function processValue(event) {
     }
 }
 
-// Listen for incoming clicks 
+// Listen for incoming events from server 
+socket.on('init game', function(boardsize) {
+    console.log("Initializing game for size " + boardsize); 
+    loadGrid(boardsize,boardsize); 
+});
+
 socket.on('cell update', function(click, oldCell) {
     unSetUserColor(oldCell);
     setUserColor(click.cell, click.color);

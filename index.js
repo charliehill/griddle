@@ -6,14 +6,54 @@ const { Server } = require("socket.io");
 const io = new Server(server);
 
 // Game state
-const boardSize = 3;
-var game = [boardSize];
-for (let i=0; i<boardSize; i++) {
-    game[i] = new Array(boardSize); 
-    for (let j=0; j<boardSize; j++) {
-        game[i][j] = {name:"", color:""}; // Initializing every cell to no user, default color
+class Game { 
+    constructor(type, cols, rows) {
+        console.log("new game " + type + " " + cols + " " + rows); 
+        this.type = type; // E.g., "sudoku"
+        this.cols = cols;
+        this.rows = rows;
+        this.board = [rows]; 
+
+        for (let row=0; row<rows; row++) {
+            this.board[row] = new Array(cols); 
+            for (let col=0; col<cols; col++) {
+                this.board[row][col] = {name:"", color:""}; // Initializing every cell to no user, default color
+            }
+        }
+        console.log (this.board); 
     }
+
+    // Find the cell that the user currently occupies
+    occupiedCell(str) { 
+        console.log("check occupied " + str); 
+        for (let row=0; row<this.rows; row++) {
+            for (let col=0; col<this.cols; col++) {
+                if (this.board[row][col].name == str) { 
+                    return {row, col}; 
+                }
+            }
+        }        
+        return "";
+    }
+
+    // Remove current user's claim to a cell
+    releaseCell(row, col) {
+        console.log("release cell " + row + " " + col); 
+        this.board[row][col].name = ""; 
+        this.board[row][col].color = "";
+    }
+
+    claimCell(row, col, name, color) {
+        console.log("claim cell " + row  + " " +  col  + " " +  name  + " " +  color); 
+        this.board[row][col].name = name; 
+        this.board[row][col].color = color; 
+        console.log(name + " moves to cell." + row + "." + col); 
+    }
+
 }
+
+let boardSize = 3;
+let game = new Game("MiniGrid", boardSize, boardSize); 
 
 // Allow static files in Express
 app.use(express.static(__dirname));
@@ -23,15 +63,24 @@ app.get('/', (req, res) => {
   res.sendFile(__dirname + '/index.html');
 });
 
-app.get('/grid', (req, res) => {
+app.get('/grid', (req, res) => { 
     res.sendFile(__dirname + '/minigrid.html');
 });
 
-// Listen for events
+app.get('/chat', (req, res) => {
+    res.sendFile(__dirname + '/chat.html');
+});
+
+// When a client connects, initialize it and start listening for various events
 io.on('connection', (socket) => {
 
     // Connect/disconnect
     console.log('User connected');
+
+    // Initialize the game on the client
+    socket.emit('init game', boardSize); 
+
+    // Disconnects
     socket.on('disconnect', () => {
       console.log('User disconnected');
     });
@@ -49,9 +98,10 @@ io.on('connection', (socket) => {
     });
 
     socket.on('set value', (name, value) => {
-        let cell = findCell(name);
-        if (cell != "") io.emit('value set', "cell." + cell.i + "." + cell.j, value);
+        let cell = game.occupiedCell(name);
+        if (cell != "") io.emit('value set', "cell." + cell.row + "." + cell.col, value);
     });
+
 });
 
 // Listen for events
@@ -68,42 +118,23 @@ function updateGame(click) {
     let cellY = cellInfo[2];
 
     // Find current cell for this user
-    let oldCellXY = findCell(click.name);
+    let oldCellXY = game.occupiedCell(click.name);
     let oldCellID = "";
+    console.log("old cell " + oldCellXY.row + ", " + oldCellXY.col + ", " + oldCellID); 
     
     if (oldCellXY != "") { 
-        releaseCell(oldCellXY.i, oldCellXY.j); 
-        oldCellID = cellID(oldCellXY.i, oldCellXY.j); 
+        game.releaseCell(oldCellXY.row, oldCellXY.col); 
+        oldCellID = cellID(oldCellXY.row, oldCellXY.col); 
     }
 
     // Last click gets the cell
-    game[cellX][cellY].name = click.name; 
-    game[cellX][cellY].color = click.color; 
-    console.log(click.name + " moves to cell." + cellX + "." + cellY + " from " + oldCellID); 
+    game.claimCell(cellX, cellY, click.name, click.color); 
 
+    // Return the previous cell if there was one otherwise ""
     return oldCellID;
-}
-
-// Find thee cell that the user currently occupies
-function findCell(name) {
-
-    for (let i=0; i<boardSize; i++) {
-        for (let j=0; j<boardSize; j++) {
-            if (game[i][j].name == name) { return {i, j}; }
-        }
-    }
-    
-    return "";
-}
-
-// Remove current user's claim to a cell
-function releaseCell(i, j) {
-    game[i][j].name = ""; 
-    game[i][j].color = "";
 }
 
 // Convert cell index into cell ID
 function cellID(i, j) {
     return "cell." + i + "." + j;
 }
-
