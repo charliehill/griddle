@@ -14,13 +14,37 @@ class Game {
         this.rows = rows;
         this.board = [rows]; 
 
+        // Initialize the board
         for (let row=0; row<rows; row++) {
             this.board[row] = new Array(cols); 
             for (let col=0; col<cols; col++) {
                 this.board[row][col] = {name:"", color:""}; // Initializing every cell to no user, default color
             }
         }
-        console.log (this.board); 
+    }
+
+    // Update the board and return the cell tha should be liberateed in return
+    updateGame(click) { 
+
+        // Extract the cell number
+        const cellInfo = click.cell.split("."); // cell ID is in format "cell.XX.YY"
+        let cellRow = cellInfo[1];
+        let cellCol = cellInfo[2];
+
+        // Find current cell for this user
+        let oldCellRowCol = this.occupiedCell(click.name);
+        let oldCellID = "";
+        
+        if (oldCellRowCol != "") { 
+            this.releaseCell(oldCellRowCol.row, oldCellRowCol.col); 
+            oldCellID = cellID(oldCellRowCol.row, oldCellRowCol.col); 
+        }
+
+        // Last click gets the cell
+        this.claimCell(cellRow, cellCol, click.name, click.color); 
+
+        // Return the previous cell if there was one otherwise ""
+        return oldCellID;
     }
 
     // Find the cell that the user currently occupies
@@ -52,8 +76,9 @@ class Game {
 
 }
 
-let boardSize = 3;
-let game = new Game("MiniGrid", boardSize, boardSize); 
+// List of games, initially empty
+var games = []; 
+//let game = new Game("MiniGrid", boardSize, boardSize); 
 
 // Allow static files in Express
 app.use(express.static(__dirname));
@@ -67,6 +92,10 @@ app.get('/grid', (req, res) => {
     res.sendFile(__dirname + '/minigrid.html');
 });
 
+app.get('/grid3x4', (req, res) => { 
+    res.sendFile(__dirname + '/minigrid3x4.html');
+});
+
 app.get('/chat', (req, res) => {
     res.sendFile(__dirname + '/chat.html');
 });
@@ -76,9 +105,6 @@ io.on('connection', (socket) => {
 
     // Connect/disconnect
     console.log('User connected');
-
-    // Initialize the game on the client
-    socket.emit('init game', boardSize); 
 
     // Disconnects
     socket.on('disconnect', () => {
@@ -92,14 +118,21 @@ io.on('connection', (socket) => {
     });
 
     // Grid
-    socket.on('cell click', (click) => {
-        let oldCell = updateGame(click);
-        io.emit('cell update', click, oldCell);
+    socket.on('game connect', (gameType, rows, cols) => {
+        console.log("received game connect: " + gameType + ", " + rows + "x" + cols);
+
+        // Initialize the game on the client with a game of the required type
+        socket.emit('init game', matchGame(gameType, rows, cols)); 
+    }); 
+
+    socket.on('cell click', (gameID, click) => {
+        let oldCell = games[gameID].updateGame(click);
+        io.emit('cell update', gameID, click, oldCell);
     });
 
-    socket.on('set value', (name, value) => {
-        let cell = game.occupiedCell(name);
-        if (cell != "") io.emit('value set', "cell." + cell.row + "." + cell.col, value);
+    socket.on('set value', (gameID, name, value) => {
+        let cell = games[gameID].occupiedCell(name);
+        if (cell != "") io.emit('value set', gameID, "cell." + cell.row + "." + cell.col, value);
     });
 
 });
@@ -109,32 +142,20 @@ server.listen(3000, () => {
   console.log('Listening on *:3000');
 });
 
-// Update the board and return the cell tha should be liberateed in return
-function updateGame(click) { 
-
-    // Extract the cell number
-    const cellInfo = click.cell.split("."); // cell ID is in format "cell.XX.YY"
-    let cellX = cellInfo[1];
-    let cellY = cellInfo[2];
-
-    // Find current cell for this user
-    let oldCellXY = game.occupiedCell(click.name);
-    let oldCellID = "";
-    console.log("old cell " + oldCellXY.row + ", " + oldCellXY.col + ", " + oldCellID); 
-    
-    if (oldCellXY != "") { 
-        game.releaseCell(oldCellXY.row, oldCellXY.col); 
-        oldCellID = cellID(oldCellXY.row, oldCellXY.col); 
+// Function to return a game of the specified type 
+function matchGame(gameType, rows, cols) {
+    for (let i = 0; i<games.length; i++) {
+        if (games[i].type == gameType) {
+            console.log("Found matching game of type " + gameType);     
+            return i; // index of game matching gameType
+        }
     }
-
-    // Last click gets the cell
-    game.claimCell(cellX, cellY, click.name, click.color); 
-
-    // Return the previous cell if there was one otherwise ""
-    return oldCellID;
+    console.log("Creating new game of type " + gameType);
+    games.push(new Game(gameType, rows, cols)); 
+    return games.length-1; // index of newly created game
 }
 
-// Convert cell index into cell ID
-function cellID(i, j) {
-    return "cell." + i + "." + j;
+// Generate cell ID from row and col values
+function cellID(row, col) {
+    return "cell." + row + "." + col;
 }

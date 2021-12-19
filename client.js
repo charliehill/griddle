@@ -1,9 +1,69 @@
 const defaultColor = "#eee";
 
-// Load the grid
+// Globals
+var gameType; 
+var rowSize; 
+var colSize; 
+var socket; 
+var gameID; 
+
+// Function to set game parameters, connect to the server, tell it about 
+// the game, and listen for events from other clients. 
+// These steps are contained in a function so different HTML pages can 
+// represent different games with a variety of parameter values. 
+function gameConnect(type, rows, cols) {
+
+    // Set game parameters
+    gameType = type; 
+    rowSize = rows; 
+    colSize = cols;
+
+    // Connect to the server and get a socket by return
+    socket = io();
+
+    // Game ID for passing on user events
+    gameID; // To initialize on "init game" event
+
+    // Tell the server about the game
+    socket.emit('game connect', gameType, rowSize, colSize);
+
+    // Listen for incoming events from the server 
+    socket.on('init game', function(id) {
+        makeGameboard(rowSize, colSize); 
+        gameID = id; 
+    });
+
+    socket.on('cell update', function(id, click, oldCell) {
+        if (gameID == id) {
+            unSetUserColor(oldCell);
+            setUserColor(click.cell, click.color);    
+        }
+    });
+
+    socket.on('value set', function(id, name, value) {
+        if (gameID == id) setValue(name, value);
+    });
+}
+
+// Function to catch a click and send it to server
+function processClick(event) { 
+    event.preventDefault();
+    if (event.target.id != "gameboard") { // Make sure it's in a cell and not the spacing around it
+        socket.emit('cell click', gameID, {cell: event.target.id, name: nickname.value, color: color});
+    } 
+}
+
+// Function to set the value of a cell
+function processValue(event) { 
+    event.preventDefault();
+    if (event.target.id != "buttonarea") { // Make sure it's in a button and not the spacing around it
+        socket.emit('set value', gameID, nickname.value, buttonValue(event.target.id));
+    }
+}
+
+// Function to load the grid
 // Generate grid of divs in format <div id="cell.row.col"></div> 
-// function loadGrid(cols, rows) {
-function loadGrid(cols, rows) {
+function makeGameboard(rows, cols) {
     console.log("Building gameboard " + rows + "x" + cols); 
 
     let gameboard = document.getElementById("gameboard"); 
@@ -24,40 +84,7 @@ function loadGrid(cols, rows) {
         }
     }
 }
-
-// Connect to the server and get a socket by return
-var socket = io();
-
-// Function to catch a click and send it to server
-function processClick(event) { 
-    event.preventDefault();
-    if (event.target.id != "gameboard") { // Make sure it's in a cell and not the spacing around it
-        socket.emit('cell click', {cell: event.target.id, name: nickname.value, color: color});
-    } 
-}
-
-function processValue(event) { 
-    event.preventDefault();
-    if (event.target.id != "buttonarea") { // Make sure it's in a button and not the spacing around it
-        socket.emit('set value', nickname.value, buttonValue(event.target.id));
-    }
-}
-
-// Listen for incoming events from server 
-socket.on('init game', function(boardsize) {
-    console.log("Initializing game for size " + boardsize); 
-    loadGrid(boardsize,boardsize); 
-});
-
-socket.on('cell update', function(click, oldCell) {
-    unSetUserColor(oldCell);
-    setUserColor(click.cell, click.color);
-});
-
-socket.on('value set', function(name, value) {
-    setValue(name, value);
-});
-
+    
 // Function to generate highlight color from user's nickname
 function stringToColor(str) {
     var hash = 0;
