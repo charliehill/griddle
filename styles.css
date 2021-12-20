@@ -35,8 +35,6 @@ spacer {
 }
 
 .gameboard > div {
-    height: 100%;
-    width: 100%;
     height: 120px;
     width: 120px;
 
