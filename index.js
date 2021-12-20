@@ -67,7 +67,7 @@ class Game {
     claimCell(row, col, name, color) {
         this.board[row][col].name = name; 
         this.board[row][col].color = color; 
-        console.log("User " + name + " claims cell." + row + "." + col); 
+            // console.log("User " + name + " to cell." + row + "." + col); 
     }
 
     setValue(row, col, value) {
@@ -117,7 +117,7 @@ io.on('connection', (socket) => {
 
     // Chat 
     socket.on('Chat message', (msg) => {
-        console.log('message: ' + msg);
+        // console.log('message: ' + msg);
         io.emit('chat message', msg);
     });
 
@@ -158,7 +158,7 @@ function matchGame(gameType, rows, cols) {
             return i; // index of game matching gameType
         }
     }
-    console.log("Creating new game:  " + gameType);
+    console.log("Creating new game: " + gameType);
     games.push(new Game(gameType, rows, cols)); 
     return games.length-1; // index of newly created game
 }

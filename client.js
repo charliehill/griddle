@@ -56,7 +56,7 @@ function makeGameboard(rows, cols) {
             return; 
         }
 
-        console.log("Building Sudoku gameboard"); 
+        // console.log("Building Sudoku gameboard"); 
 
         let sudokuboard = document.getElementById("sudokuboard"); // Sudoku-specific outer grid for board
 
@@ -93,7 +93,7 @@ function makeGameboard(rows, cols) {
         }
     }
     else {
-        console.log("Building gameboard " + rows + "x" + cols); 
+        // console.log("Building gameboard " + rows + "x" + cols); 
 
         let gameboard = document.getElementById("gameboard"); 
 
