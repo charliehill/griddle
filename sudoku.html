@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Sudoku</title>
+    <link rel="stylesheet" href="styles.css" type="text/css">
+    <link rel="stylesheet" href="sudoku.css" type="text/css">
+</head>
+
+<body>
+
+    <header>
+        <form id="header" action="">
+            <input id="nickname" class="nickname" autocomplete="off" oninput="genUserColor()"/>
+        </form>    
+    </header>
+
+    <div class="sudokuboard" id="sudokuboard" onclick="processClick(event)"></div>
+
+    <div class="spacer">&nbsp;</div>
+
+    <div class="buttonarea" id="buttonarea" onclick="processValue(event)">
+        <div id="button.0">x</div>
+        <div id="button.1">1</div>
+        <div id="button.2">2</div>  
+        <div id="button.3">3</div>
+        <div id="button.4">4</div>
+        <div id="button.5">5</div>
+        <div id="button.6">6</div>
+        <div id="button.7">7</div>
+        <div id="button.8">8</div>
+        <div id="button.9">9</div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="client.js"></script>
+    <script> gameConnect("Sudoku", 9, 9); </script>
+</body>
+
+</html>

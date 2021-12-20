@@ -28,9 +28,10 @@ function gameConnect(type, rows, cols) {
     socket.emit('game connect', gameType, rowSize, colSize);
 
     // Listen for incoming events from the server 
-    socket.on('init game', function(id) {
-        makeGameboard(rowSize, colSize); 
+    socket.on('init game', function(id, game) {
         gameID = id; 
+        makeGameboard(rowSize, colSize); 
+        initGameboard(game); 
     });
 
     socket.on('cell update', function(id, click, oldCell) {
@@ -45,6 +46,86 @@ function gameConnect(type, rows, cols) {
     });
 }
 
+// Function to draw the board on the page
+function makeGameboard(rows, cols) {
+    if (gameType=="Sudoku") {
+
+        // Check it's the supported size before continuing
+        if (rows!=9 || cols!=9) {
+            console.log("Error building Sudoku gameboard: wrong size"); 
+            return; 
+        }
+
+        console.log("Building Sudoku gameboard"); 
+
+        let sudokuboard = document.getElementById("sudokuboard"); // Sudoku-specific outer grid for board
+
+        // Sudoku is constructed as a 3x3 grid of 3x3 gameboards
+        const outerSize = 3;
+        const innerSize = 3;
+        for (let outerRow=0; outerRow<outerSize; outerRow++) {
+           for (let outerCol=0; outerCol<outerSize; outerCol++) {
+
+                // Insert a new gameboard
+                let gameboard = document.createElement("div");
+                gameboard.id = "gameboard." + outerRow + "." + outerCol;
+                gameboard.className = "gameboard";
+                sudokuboard.appendChild(gameboard); // e.g., <div id="gameboard.0.1">
+
+                // Set the CSS for the required grid layout
+                let gridcolstr = "";
+                for (let col=0; col<innerSize; col++) {
+                    gridcolstr += "auto ";
+                }
+                gameboard.style.gridTemplateColumns = gridcolstr; 
+                
+                // Make the 9 cells for the gameboard 
+                innerRowStart = outerRow*3;
+                innerColStart = outerCol*3;
+                for (let innerRow=innerRowStart; innerRow<innerRowStart+3; innerRow++) {
+                    for (let innerCol=innerColStart; innerCol<innerColStart+3; innerCol++) {
+                        let newDiv = document.createElement("div");
+                        newDiv.id = "cell." + innerRow + "." + innerCol;
+                        gameboard.appendChild(newDiv); // e.g., <div id="cell.0.1"></div>          
+                    }
+                }
+           } 
+        }
+    }
+    else {
+        console.log("Building gameboard " + rows + "x" + cols); 
+
+        let gameboard = document.getElementById("gameboard"); 
+
+        // Set the CSS for the required grid layout
+        let gridcolstr = "";
+        for (let col=0; col<cols; col++) {
+            gridcolstr += "auto ";
+        }
+        gameboard.style.gridTemplateColumns = gridcolstr; 
+
+        // Generate the HTML for the cells
+        for (let row=0; row<rows; row++) {
+            for (let col=0; col<cols; col++) {
+                let newDiv = document.createElement("div");
+                newDiv.id = "cell." + row + "." + col;
+                gameboard.appendChild(newDiv); // e.g., <div id="cell.0.1"></div> 
+            }
+        }
+    }
+}
+
+// Function to set the state of the board to match a game object passed from the server
+function initGameboard(game) {
+    for (row=0; row<game.rows; row++) {
+        for (col=0; col<game.cols; col++) {
+            let cell = rowColToID(row, col); 
+            setUserColor(cell, game.board[row][col].color);
+            setValue(cell, game.board[row][col].value); 
+        }
+    }    
+}
+    
 // Function to catch a click and send it to server
 function processClick(event) { 
     event.preventDefault();
@@ -61,30 +142,6 @@ function processValue(event) {
     }
 }
 
-// Function to load the grid
-// Generate grid of divs in format <div id="cell.row.col"></div> 
-function makeGameboard(rows, cols) {
-    console.log("Building gameboard " + rows + "x" + cols); 
-
-    let gameboard = document.getElementById("gameboard"); 
-
-    // Set the CSS for the required grid layout
-    let gridcolstr = "";
-    for (let col=0; col<cols; col++) {
-        gridcolstr += "auto ";
-    }
-    gameboard.style.gridTemplateColumns = gridcolstr; 
-
-    // Generate the HTML for the cells
-    for (let row=0; row<rows; row++) {
-        for (let col=0; col<cols; col++) {
-            let newDiv = document.createElement("div");
-            newDiv.id = "cell." + row + "." + col;
-            gameboard.appendChild(newDiv); 
-        }
-    }
-}
-    
 // Function to generate highlight color from user's nickname
 function stringToColor(str) {
     var hash = 0;
@@ -118,6 +175,7 @@ function unSetUserColor (cellID) {
 
 // Set the color of a cell
 function setUserColor(cell, color) { 
+    if (color == "") color = defaultColor;  
     document.getElementById(cell).style.backgroundColor = color; 
 }
 
@@ -133,3 +191,7 @@ function buttonValue(cellID) {
     return val; 
 }
 
+// Generate cell ID from row and col values
+function rowColToID(row, col) {
+    return "cell." + row + "." + col;
+}
