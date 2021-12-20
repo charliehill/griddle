@@ -10,7 +10,7 @@ var gameID;
 // Function to set game parameters, connect to the server, tell it about 
 // the game, and listen for events from other clients. 
 // These steps are contained in a function so different HTML pages can 
-// represent different games with a variety of parameter values. 
+// use it to represent different games with a variety of parameter values. 
 function gameConnect(type, rows, cols) {
 
     // Set game parameters
@@ -20,9 +20,6 @@ function gameConnect(type, rows, cols) {
 
     // Connect to the server and get a socket by return
     socket = io();
-
-    // Game ID for passing on user events
-    gameID; // To initialize on "init game" event
 
     // Tell the server about the game
     socket.emit('game connect', gameType, rowSize, colSize);
@@ -48,72 +45,84 @@ function gameConnect(type, rows, cols) {
 
 // Function to draw the board on the page
 function makeGameboard(rows, cols) {
-    if (gameType=="Sudoku") {
+    if (gameType=="Sudoku") 
+        makeSudokuBoard(rows, cols); 
 
-        // Check it's the supported size before continuing
-        if (rows!=9 || cols!=9) {
-            console.log("Error building Sudoku gameboard: wrong size"); 
-            return; 
-        }
+    else 
+        makeSimpleBoard(rows, cols);
 
-        // console.log("Building Sudoku gameboard"); 
+}
 
-        let sudokuboard = document.getElementById("sudokuboard"); // Sudoku-specific outer grid for board
+// Function to make a basic gameboard
+function makeSimpleBoard(rows, cols) {
 
-        // Sudoku is constructed as a 3x3 grid of 3x3 gameboards
-        const outerSize = 3;
-        const innerSize = 3;
-        for (let outerRow=0; outerRow<outerSize; outerRow++) {
-           for (let outerCol=0; outerCol<outerSize; outerCol++) {
+    // console.log("Building gameboard " + rows + "x" + cols); 
+    let gameboard = document.getElementById("gameboard"); 
 
-                // Insert a new gameboard
-                let gameboard = document.createElement("div");
-                gameboard.id = "gameboard." + outerRow + "." + outerCol;
-                gameboard.className = "gameboard";
-                sudokuboard.appendChild(gameboard); // e.g., <div id="gameboard.0.1">
-
-                // Set the CSS for the required grid layout
-                let gridcolstr = "";
-                for (let col=0; col<innerSize; col++) {
-                    gridcolstr += "auto ";
-                }
-                gameboard.style.gridTemplateColumns = gridcolstr; 
-                
-                // Make the 9 cells for the gameboard 
-                innerRowStart = outerRow*3;
-                innerColStart = outerCol*3;
-                for (let innerRow=innerRowStart; innerRow<innerRowStart+3; innerRow++) {
-                    for (let innerCol=innerColStart; innerCol<innerColStart+3; innerCol++) {
-                        let newDiv = document.createElement("div");
-                        newDiv.id = "cell." + innerRow + "." + innerCol;
-                        gameboard.appendChild(newDiv); // e.g., <div id="cell.0.1"></div>          
-                    }
-                }
-           } 
-        }
+    // Set the CSS for the required grid layout
+    let gridcolstr = "";
+    for (let col=0; col<cols; col++) {
+        gridcolstr += "auto ";
     }
-    else {
-        // console.log("Building gameboard " + rows + "x" + cols); 
+    gameboard.style.gridTemplateColumns = gridcolstr; 
 
-        let gameboard = document.getElementById("gameboard"); 
-
-        // Set the CSS for the required grid layout
-        let gridcolstr = "";
+    // Generate the HTML for the cells
+    for (let row=0; row<rows; row++) {
         for (let col=0; col<cols; col++) {
-            gridcolstr += "auto ";
-        }
-        gameboard.style.gridTemplateColumns = gridcolstr; 
-
-        // Generate the HTML for the cells
-        for (let row=0; row<rows; row++) {
-            for (let col=0; col<cols; col++) {
-                let newDiv = document.createElement("div");
-                newDiv.id = "cell." + row + "." + col;
-                gameboard.appendChild(newDiv); // e.g., <div id="cell.0.1"></div> 
-            }
+            let newDiv = document.createElement("div");
+            newDiv.id = "cell." + row + "." + col;
+            gameboard.appendChild(newDiv); // e.g., <div id="cell.0.1"></div> 
         }
     }
 }
+
+
+// Function to make a Sudoku-specific board 
+function makeSudokuBoard(rows, cols) {
+
+    // Check it's the supported size before continuing
+    if (rows!=9 || cols!=9) {
+        console.log("Error building Sudoku gameboard: wrong size"); 
+        return; 
+    }
+
+    // console.log("Building Sudoku gameboard"); 
+
+    let sudokuboard = document.getElementById("sudokuboard"); // Sudoku-specific outer grid for board
+
+    // Sudoku is constructed as a 3x3 grid of 3x3 gameboards
+    const outerSize = 3;
+    const innerSize = 3;
+    for (let outerRow=0; outerRow<outerSize; outerRow++) {
+        for (let outerCol=0; outerCol<outerSize; outerCol++) {
+
+            // Insert a new gameboard
+            let gameboard = document.createElement("div");
+            gameboard.id = "gameboard." + outerRow + "." + outerCol;
+            gameboard.className = "gameboard";
+            sudokuboard.appendChild(gameboard); // e.g., <div id="gameboard.0.1">
+
+            // Set the CSS for the required grid layout
+            let gridcolstr = "";
+            for (let col=0; col<innerSize; col++) {
+                gridcolstr += "auto ";
+            }
+            gameboard.style.gridTemplateColumns = gridcolstr; 
+            
+            // Make the 9 cells for the gameboard 
+            innerRowStart = outerRow*3;
+            innerColStart = outerCol*3;
+            for (let innerRow=innerRowStart; innerRow<innerRowStart+3; innerRow++) {
+                for (let innerCol=innerColStart; innerCol<innerColStart+3; innerCol++) {
+                    let newDiv = document.createElement("div");
+                    newDiv.id = "cell." + innerRow + "." + innerCol;
+                    gameboard.appendChild(newDiv); // e.g., <div id="cell.0.1"></div>          
+                }
+            }
+        } 
+    }
+}
+
 
 // Function to set the state of the board to match a game object passed from the server
 function initGameboard(game) {
@@ -129,7 +138,7 @@ function initGameboard(game) {
 // Function to catch a click and send it to server
 function processClick(event) { 
     event.preventDefault();
-    if (event.target.id != "gameboard") { // Make sure it's in a cell and not the spacing around it
+    if (event.target.id.substr(0,4) == "cell") { // Make sure it's in a cell and not the spacing around it
         socket.emit('cell click', gameID, {cell: event.target.id, name: nickname.value, color: color});
     } 
 }
