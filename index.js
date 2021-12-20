@@ -8,7 +8,6 @@ const io = new Server(server);
 // Game state
 class Game { 
     constructor(type, cols, rows) {
-        console.log("new game " + type + " " + cols + " " + rows); 
         this.type = type; // E.g., "sudoku"
         this.cols = cols;
         this.rows = rows;
@@ -18,7 +17,7 @@ class Game {
         for (let row=0; row<rows; row++) {
             this.board[row] = new Array(cols); 
             for (let col=0; col<cols; col++) {
-                this.board[row][col] = {name:"", color:""}; // Initializing every cell to no user, default color
+                this.board[row][col] = {name:"", color:"", value:""}; // Initializing every cell to no user, default color
             }
         }
     }
@@ -37,7 +36,7 @@ class Game {
         
         if (oldCellRowCol != "") { 
             this.releaseCell(oldCellRowCol.row, oldCellRowCol.col); 
-            oldCellID = cellID(oldCellRowCol.row, oldCellRowCol.col); 
+            oldCellID = rowColToID(oldCellRowCol.row, oldCellRowCol.col); 
         }
 
         // Last click gets the cell
@@ -49,7 +48,6 @@ class Game {
 
     // Find the cell that the user currently occupies
     occupiedCell(str) { 
-        console.log("check occupied " + str); 
         for (let row=0; row<this.rows; row++) {
             for (let col=0; col<this.cols; col++) {
                 if (this.board[row][col].name == str) { 
@@ -62,16 +60,18 @@ class Game {
 
     // Remove current user's claim to a cell
     releaseCell(row, col) {
-        console.log("release cell " + row + " " + col); 
         this.board[row][col].name = ""; 
         this.board[row][col].color = "";
     }
 
     claimCell(row, col, name, color) {
-        console.log("claim cell " + row  + " " +  col  + " " +  name  + " " +  color); 
         this.board[row][col].name = name; 
         this.board[row][col].color = color; 
-        console.log(name + " moves to cell." + row + "." + col); 
+        console.log("User " + name + " claims cell." + row + "." + col); 
+    }
+
+    setValue(row, col, value) {
+        this.board[row][col].value = value; 
     }
 
 }
@@ -94,6 +94,10 @@ app.get('/grid', (req, res) => {
 
 app.get('/grid3x4', (req, res) => { 
     res.sendFile(__dirname + '/minigrid3x4.html');
+});
+
+app.get('/sudoku', (req, res) => { 
+    res.sendFile(__dirname + '/sudoku.html');
 });
 
 app.get('/chat', (req, res) => {
@@ -119,10 +123,11 @@ io.on('connection', (socket) => {
 
     // Grid
     socket.on('game connect', (gameType, rows, cols) => {
-        console.log("received game connect: " + gameType + ", " + rows + "x" + cols);
+        console.log("Connected for " + gameType);
 
         // Initialize the game on the client with a game of the required type
-        socket.emit('init game', matchGame(gameType, rows, cols)); 
+        let id = matchGame(gameType, rows, cols);
+        socket.emit('init game', id, games[id]); 
     }); 
 
     socket.on('cell click', (gameID, click) => {
@@ -132,7 +137,10 @@ io.on('connection', (socket) => {
 
     socket.on('set value', (gameID, name, value) => {
         let cell = games[gameID].occupiedCell(name);
-        if (cell != "") io.emit('value set', gameID, "cell." + cell.row + "." + cell.col, value);
+        if (cell != "") {
+            games[gameID].setValue(cell.row, cell.col, value); 
+            io.emit('value set', gameID, "cell." + cell.row + "." + cell.col, value);
+        }
     });
 
 });
@@ -146,16 +154,24 @@ server.listen(3000, () => {
 function matchGame(gameType, rows, cols) {
     for (let i = 0; i<games.length; i++) {
         if (games[i].type == gameType) {
-            console.log("Found matching game of type " + gameType);     
+            console.log("Found matching game: " + gameType);     
             return i; // index of game matching gameType
         }
     }
-    console.log("Creating new game of type " + gameType);
+    console.log("Creating new game:  " + gameType);
     games.push(new Game(gameType, rows, cols)); 
     return games.length-1; // index of newly created game
 }
 
 // Generate cell ID from row and col values
-function cellID(row, col) {
+function rowColToID(row, col) {
     return "cell." + row + "." + col;
 }
+
+/*
+// Generate row and col values from cell ID
+function IDtoRowCol(str) {
+    let cellInfo = str.split("."); // cell ID is in format "cell.XX.YY"
+    return {row: cellInfo[1], col: cellInfo[2]};   
+}
+*/
