@@ -167,12 +167,95 @@ function stringToColor(str) {
     return color;
 }
 
+// Better function to generate highlight color from user's nickname
+function stringToColor2(str) {
+
+    if (str.length >= 3) { // skip for strings less than three chars
+        let mod = str.length%3; // modulus
+        let sLen, lLen;
+        sLen = lLen = (str.length/3); // quotient
+ 
+        // Divide the string into 3 parts, favoring Hue then Saturation if there is a remainder
+        let lStr = str.slice(0, lLen);
+        let sStr = str.slice(lLen,lLen+sLen); 
+        let hStr = str.slice(lLen+sLen); // to end
+        // log("String: " + str + ", L: " + lStr + ", S: " + sStr + ", H: " + hStr); 
+
+        color = "hsl(" + hVal(hStr) + ", " + sVal(sStr) + "%, " +  lVal(lStr) + "%)";
+        return color; 
+    }
+
+    return "#eee"; // Couldn't compute a color
+}
+
+// Better function to generate highlight color from user's nickname
+function stringToColor3(str) {
+
+    if (str.length >= 3) { // skip for strings less than three chars
+        // let mod = str.length%3; // modulus
+        let sLen, lLen;
+        sLen = lLen = (str.length/3); // quotient
+ 
+        // Divide the string into 3 parts
+        let hStr = str.slice(0, lLen);
+        let sStr = str.slice(lLen,lLen+sLen); 
+        let lStr = str.slice(lLen+sLen); // to end
+
+        color = "hsl(" + hVal(hStr) + ", " + sVal(sStr) + "%, " +  lVal(lStr) + "%)";
+        return color; 
+    }
+
+    return "#eee"; // Couldn't compute a color
+}
+
+function hVal(str) {
+    return stringToVal(str, 0, 360); // Hue in range 0-360 
+}
+
+function sVal(str) {
+    return stringToVal(str, 30, 70); // Saturation percent
+}
+
+function lVal(str) {
+    return stringToVal(str, 60, 80); // Intensity percent
+}
+
+// Alphabet for indexing a character to get a number
+const alphabetStr = "abcdefghijklmnopqrstuvwxyz"; 
+// Balanced alphabet for even distribution - see https://www3.nd.edu/~busiforc/handouts/cryptography/letterfrequencies.html
+// Frequency order in English: EARIOTNSLCUDPMHGBFYWKVXZJQ, eariotnslcudpmhgbfywkvxzjq
+// Manually scrambled (in attempt to encourage more diverse values): qepklhbtiydaxwscofnjuvgmrz
+const balancedAlphabetStr = "qepklhbtiydaxwscofnjuvgmrz"; 
+const tweakedAlphabetStr = "cqpkltheiydaxwofnjuvgsmrzb"; 
+
+// Return an integer between 0 and 100 based on average char value of the string, where a = 0 and z = range;
+function stringToVal(str, floor, ceiling) {
+    let strLower = str.toLowerCase(); 
+/*
+    if (strLower.length > 4) { // cut off the first letter to reduce bias
+        strLower = strLower.slice(1); 
+    }
+*/
+    if (strLower.length > 4) { // cut off the last letter to reduce consistency
+        strLower = strLower.slice(-1); 
+    }
+    let len = strLower.length; 
+    let val = 0;
+    for (let i=0; i<len; i++) 
+        val += (tweakedAlphabetStr.indexOf(strLower.slice(i,i+1))); // val is in range (0-25) * i
+    
+    val = val/len; // average over the characters in the string in range 0-25
+    val = floor + (val * (ceiling-floor) / 25); 
+    return val.toFixed();
+}
+
+
 // Catch a key in nickname field and generate color from it
 var color;
 
-function genUserColor() { 
+function genUserColor(event) { 
     event.preventDefault();
-    color=stringToColor(nickname.value);
+    color=stringToColor3(nickname.value);
     document.getElementById("nickname").style.borderColor = color;
 }
 
@@ -203,4 +286,9 @@ function buttonValue(cellID) {
 // Generate cell ID from row and col values
 function rowColToID(row, col) {
     return "cell." + row + "." + col;
+}
+
+// Print to log
+function log(str) {
+    console.log(str); 
 }
