@@ -6,11 +6,11 @@ var rowSize;
 var colSize; 
 var socket; 
 var gameID; 
+var userColor;
 
-// Function to set game parameters, connect to the server, tell it about 
-// the game, and listen for events from other clients. 
-// These steps are contained in a function so different HTML pages can 
-// use it to represent different games with a variety of parameter values. 
+// Function to set game parameters, connect to the server, tell it 
+// about the game, and listen for events from other clients. 
+// HTML pages can call it to represent different games. 
 function gameConnect(type, rows, cols) {
 
     // Set game parameters
@@ -31,15 +31,15 @@ function gameConnect(type, rows, cols) {
         initGameboard(game); 
     });
 
-    socket.on('cell update', function(id, click, oldCell) {
+    socket.on('cell update', function(id, cellID, color, oldCellID) {
         if (gameID == id) {
-            unSetUserColor(oldCell);
-            setUserColor(click.cell, click.color);    
+            resetCellColor(oldCellID);
+            setCellColor(cellID, color); 
         }
     });
 
     socket.on('value set', function(id, name, value) {
-        if (gameID == id) setValue(name, value);
+        if (gameID == id) setCellValue(name, value);
     });
 }
 
@@ -82,7 +82,7 @@ function makeSudokuBoard(rows, cols) {
 
     // Check it's the supported size before continuing
     if (rows!=9 || cols!=9) {
-        console.log("Error building Sudoku gameboard: wrong size"); 
+        error("Error building Sudoku gameboard: wrong size"); 
         return; 
     }
 
@@ -129,8 +129,8 @@ function initGameboard(game) {
     for (row=0; row<game.rows; row++) {
         for (col=0; col<game.cols; col++) {
             let cell = rowColToID(row, col); 
-            setUserColor(cell, game.board[row][col].color);
-            setValue(cell, game.board[row][col].value); 
+            setCellColor(cell, game.board[row][col].color);
+            setCellValue(cell, game.board[row][col].value); 
         }
     }    
 }
@@ -139,7 +139,8 @@ function initGameboard(game) {
 function processClick(event) { 
     event.preventDefault();
     if (event.target.id.substr(0,4) == "cell") { // Make sure it's in a cell and not the spacing around it
-        socket.emit('cell click', gameID, {cell: event.target.id, name: nickname.value, color: color});
+        // log(gameID + ", " + event.target.id + ", " + nickname.value + ", " + userColor); 
+        socket.emit('cell click', gameID, event.target.id, nickname.value, userColor);
     } 
 }
 
@@ -249,31 +250,29 @@ function stringToVal(str, floor, ceiling) {
     return val.toFixed();
 }
 
-
 // Catch a key in nickname field and generate color from it
-var color;
-
 function genUserColor(event) { 
     event.preventDefault();
-    color=stringToColor3(nickname.value);
-    document.getElementById("nickname").style.borderColor = color;
+    userColor=stringToColor3(nickname.value);
+    document.getElementById("nickname").style.borderColor = userColor;
 }
 
-function unSetUserColor (cellID) {
+function resetCellColor (cellID) {
     if (cellID != "") {
         document.getElementById(cellID).style.backgroundColor = defaultColor;
     }
 }
 
 // Set the color of a cell
-function setUserColor(cell, color) { 
-    if (color == "") color = defaultColor;  
-    document.getElementById(cell).style.backgroundColor = color; 
+function setCellColor(cellID, color) { 
+    // log(cellID); 
+    if (color == "") color = defaultColor; 
+    document.getElementById(cellID).style.backgroundColor = color; 
 }
 
 // Set the value of a cell
-function setValue(cell, value) { 
-    document.getElementById(cell).innerHTML = value; 
+function setCellValue(cellID, cellValue) { 
+    document.getElementById(cellID).innerHTML = cellValue; 
 }
 
 // Return the value represented by the button
@@ -292,3 +291,9 @@ function rowColToID(row, col) {
 function log(str) {
     console.log(str); 
 }
+
+// Print to log
+function error(str) {
+    console.error(str); 
+}
+

@@ -23,15 +23,15 @@ class Game {
     }
 
     // Update the board and return the cell tha should be liberateed in return
-    updateGame(click) { 
+    updateGame(cellID, name, cellColor) { 
 
         // Extract the cell number
-        const cellInfo = click.cell.split("."); // cell ID is in format "cell.XX.YY"
+        const cellInfo = cellID.split("."); // cell ID is in format "cell.XX.YY"
         let cellRow = cellInfo[1];
         let cellCol = cellInfo[2];
 
         // Find current cell for this user
-        let oldCellRowCol = this.occupiedCell(click.name);
+        let oldCellRowCol = this.occupiedCell(name);
         let oldCellID = "";
         
         if (oldCellRowCol != "") { 
@@ -40,7 +40,7 @@ class Game {
         }
 
         // Last click gets the cell
-        this.claimCell(cellRow, cellCol, click.name, click.color); 
+        this.claimCell(cellRow, cellCol, name, cellColor); 
 
         // Return the previous cell if there was one otherwise ""
         return oldCellID;
@@ -130,9 +130,9 @@ io.on('connection', (socket) => {
         socket.emit('init game', id, games[id]); 
     }); 
 
-    socket.on('cell click', (gameID, click) => {
-        let oldCell = games[gameID].updateGame(click);
-        io.emit('cell update', gameID, click, oldCell);
+    socket.on('cell click', (gameID, cellID, name, cellColor) => {
+        let oldCell = games[gameID].updateGame(cellID, name, cellColor);
+        io.emit('cell update', gameID, cellID, cellColor, oldCell); 
     });
 
     socket.on('set value', (gameID, name, value) => {
